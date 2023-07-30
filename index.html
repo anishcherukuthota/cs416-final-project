@@ -1,1 +1,132 @@
-Hello, world.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Population Data Scatter Plot</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+
+  <h3>
+    Global population has increased from 2,499,322,000 to 7,909,295,000 between 1950 and 2021. As of 2021, the largest contributor to global population was China with a population of 1,425,893,500.
+  <h4>
+  Take a look at how the global population as well as how the top 5 contributors to global population have changed over the years. Hover over each point on the scatterplot for details. (Details will appear below the chart).
+  </h4>
+  </h3>
+
+  <script>
+    const svg = d3.select("body")
+      .append("svg")
+      .attr("width", 1400)
+      .attr("height", 500)
+      .append("g")
+      .attr("transform", "translate(150,20)");
+
+    d3.csv("population.csv").then(function(data) {
+      data.forEach(function(d) {
+        d.Year = +d.Year;
+        d.Population = +d.Population;
+        d.GDP = +d.GDP;
+      });
+
+      const top5Contributors = {};
+
+      data.forEach(function(d) {
+        if (!top5Contributors[d.Year]) {
+          top5Contributors[d.Year] = [];
+        }
+
+        if (top5Contributors[d.Year].length < 6) {
+          top5Contributors[d.Year].push(d);
+        }
+        else {
+          let minValue = top5Contributors[d.Year][0];
+          let minInd = 0;
+          for (let i = 1; i < 6; i++) {
+            if (top5Contributors[d.Year][i].Population < minValue.Population) {
+              minValue = top5Contributors[d.Year][i];
+              minInd = i;
+            }
+          }
+          if (d.Population > minValue.Population) {
+            top5Contributors[d.Year][minInd] = d;
+          }
+        }
+      });
+
+      const top5Data = Object.values(top5Contributors).flat();
+
+      const xScale = d3.scaleLinear()
+        .domain(d3.extent(data, function(d) { return d.Year; }))
+        .range([0, 1200]);
+
+      const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, function(d) { return d.Population; })])
+        .range([400, 0]);
+
+      const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+      const xAxis = d3.axisBottom(xScale)
+        .tickFormat(d3.format("d"));
+
+      const yAxis = d3.axisLeft(yScale);
+
+      svg.append("g")
+        .attr("transform", `translate(0,400)`)
+        .call(xAxis);
+
+      svg.append("g")
+        .call(yAxis);
+
+      svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("x", 600)
+        .attr("y", 450)
+        .text("Year");
+
+      svg.append("text")
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -200)
+        .attr("y", -100)
+        .text("Population");
+
+      svg.append("text")
+        .attr("x", 600)
+        .attr("y", 0)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .text("Population of the World and the Five Most Populous Countries by Year from 1950 to 2021");
+
+      const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+          
+      svg.selectAll(".dot")
+        .data(top5Data)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .attr("cx", function(d) { return xScale(d.Year); })
+        .attr("cy", function(d) { return yScale(d.Population); })
+        .attr("r", 3)
+        .attr("fill", function(d) { return colorScale(d.CountryName); })
+        .on("mouseover", function(event, d) {
+          tooltip.transition()
+            .duration(200)
+            .style("opacity", 1);
+          tooltip.html(`Country/Region: ${d.CountryName}<br>Year: ${d.Year}<br>Population: ${d.Population.toLocaleString()}`)
+        })
+        .on("mouseout", function() { 
+          tooltip.transition()
+            .duration(200)
+            .style("opacity", 0);
+        });
+    })
+    .catch(function(error) {
+      console.error("Error loading data:", error);
+    });
+  </script>
+</body>
+</html>
