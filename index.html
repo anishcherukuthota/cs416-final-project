@@ -89,16 +89,15 @@
           .call(yAxis);
 
         svg.append("text")
-          .attr("x", 600) // Adjust the x position to center the label
+          .attr("x", 600)
           .attr("y", 450)
           .attr("text-anchor", "middle")
           .style("font-size", "14px")
           .text("Year");
-
-        // Add y-axis label
+        
         svg.append("text")
           .attr("transform", "rotate(-90)")
-          .attr("x", -200) // Adjust the x position to center the label
+          .attr("x", -200)
           .attr("y", -100)
           .attr("text-anchor", "middle")
           .style("font-size", "14px")
